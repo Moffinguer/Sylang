@@ -6,10 +6,10 @@ use strict;
 
 our $CONCAT = '.';
 our $ADD = '+'; our $MIN = '-'; our $PROD = '*'; our $RDIV = '/';
-our $GT = '>'; our $EQ = '==';
+our $GT = '>'; our $EQ = '=';
 our $NEG = 'not'; my $AND = 'and'; our $OR = 'or';
 our $LPAR = '('; our $RPAR = ')'; our $ENDINST = ';';
-our $ASIG = '='; 
+our $ASIG = ':='; 
 our $tokens = {
 	# String
 	$CONCAT => 'CONCAT',
@@ -30,14 +30,19 @@ our $tokens = {
 	$ASIG => 'ASIG'
 };
 
+
+my $IF_ELSE = qr/^\s*if <(.+)> then:([\S\s]+)(else:([\S\s]+?))?end\s*$/;
+my $LITERAL = qr/^\s*([\_a-zA-Z0-9]{255})\s*$/;
+my $VARIABLE = qr/^\s*(\&[a-z0-9\_])\s*$/i;
 my $INTEGER = qr/^\s*(\d+)\s*$/;
 my $FLOAT = qr/^\s*((\d+)?\.(\d+))\s*$/;
 my $NUMBER = qr/^\s*($FLOAT|$INTEGER)\s*$/;
-my $STRING = qr/^\s*[\"\'].*\[\"\']s*$/;
-my $ARITHMETICOP = qr/^\s*(.+)\s+($PROD|$RDIV|$ADD|$MIN)\s+(.+)\s*$/;
-my $RELATIONALOP = qr/^\s*(.+)\s+($GT|$EQ)\s+(.+)\s*$/;
-my $CONDITIONALOP = qr/^\s*(.+)\s+($AND|$OR)\s+(.+)\s*$/; # bug when there are nested operators, can be fixed tokenizing the parentesis first
-my $BOOLEAN = qr/($RELATIONALOP|$CONDITIONALOP|$INTEGER|$STRING)^$/;
+my $STRING = qr/^\s*[\"\'].*[\"\']\s*$/;
+my $RESERVED = qr/^\s*(let|if|then|else|elif|for|while|end)\s*$/;
+# my $ARITHMETICOP = qr/^\s*(.+) ($PROD|$RDIV|$ADD|$MIN) (.+)\s*$/;
+my $RELATIONALOP = qr/^\s*(.+) ($GT|$EQ) (.+)\s*$/;
+my $CONDITIONALOP = qr/^\s*(.+) ($AND|$OR) (.+)\s*$/; # bug when there are nested operators, can be fixed tokenizing the parentesis first
+my $BOOLEAN = qr/($RELATIONALOP|$CONDITIONALOP|$INTEGER|$STRING|$LITERAL)^$/;
 our $data_types = {
 	number => {
 		pattern => $NUMBER,
@@ -58,8 +63,7 @@ our $data_types = {
 	}
 };
 
-our $VARIABLENAME = qr/^\s*(\&[\_a-zA-Z0-9]{255})\s*$/;
-our $VARIABLESCOPE = qr/^\s*(let)\s*$/;
+
 
 sub parser #( $line )
 {
@@ -75,6 +79,15 @@ sub parser #( $line )
 		{
 			if ( exists $tokens->{ $tag } )
 			{
+				if ( defined $value and $value =~ $data_types->{ string }->{ pattern } )
+				{
+					$ast .= "\t" x $level;
+					$ast .= "$order - $value - $data_types->{ number }->{ translate }";	
+					$ast .= "\n";
+					$order++;
+					undef $value;
+
+				}
 				if ( defined $value and $value =~ $data_types->{ number }->{ pattern } )
 				{
 					$ast .= "\t" x $level;
@@ -103,6 +116,7 @@ sub parser #( $line )
 		}
 		if ( defined $value and $value =~ $data_types->{ number }->{ pattern } )
 		{
+			$ast .= "\t" x $level;
 			$ast .= "$order - $value - ";
 			if ( $value =~ $data_types->{ number }->{ specific_type }->{ integer }->{ pattern } ) 
 			{
@@ -116,14 +130,25 @@ sub parser #( $line )
 			$order++;
 			undef $value;
 		}
+		if ( defined $value and $value =~ $data_types->{ string }->{ pattern } )
+		{
+			$ast .= "\t" x $level;
+			$ast .= "$order - $value - $data_types->{ number }->{ translate }";	
+			$ast .= "\n";
+			$order++;
+			undef $value;
+
+		}
 	}
 
 	print "$ast\n";
 }
 
-my $test = "54 + -3.2 *(15.2/98)";
+my $test = "54 + -3.2 *(15.2/98 - 56*(14/(98+1)));\na:=5;";
 print $test, "\n";
 
 &parser( $test );
 
-$test = "\'Prueba\'";
+# $test = "\'Prueba\'";
+# print $test, "\n";
+# &parser( $test );
