@@ -1,0 +1,15 @@
+elesar funcionPrueba |{
+
+	int numero;
+	double otro_numero := 4.;
+	numero := otro_numero * -5 +14/.9;
+	
+	# This check does not have sense
+	bool check := numero gt otro_numero and numero df 5 or 5 lt 4;
+
+
+	println "Texto". numero;
+	
+	comeback numero;
+
+}|
