@@ -1,4 +1,2 @@
-/bin/
-/lib/
-/lib64
-/pyvenv.cfg
+/.venv
+/models/.antlr/*

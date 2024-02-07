@@ -1,0 +1,63 @@
+// SINTAXIS LENGUAJE( simple ):
+
+tipo_var nombre_var [:= expresion ];
+
+if <expresion> then
+{
+	instruccion
+}
+[
+	elif <expresion> then {
+		instruccion
+	}
+]*
+[
+	else
+	{
+		instruccion
+	}
+]
+
+while <expresion> then
+{
+	instruccion
+}
+
+op => add | sub | mul | div | gt | lt | eq | ne | ge | le | and | or | xor |
+
+
+tipo_var => natural | real 
+
+
+
+expresion_generica =>	(* expresion_generica )*
+						|
+						ID
+						|
+						STRINGS
+						|
+						(* expresion_generica operador_generico expresion_generica  )* 
+						|
+						numerical_expressions
+						|
+						logical_expressions
+						|
+						relational_expressions
+						;
+
+numerical_expressions => NUMBER | expresion_generica operador_numerico expresion_generica | NEG expresion_generica;
+logical_expressions =>   expresion_generica operador_logico expresion_generica | NOT expresion_generica;
+relational_expressions => expresion_generica operador_relacional expresion_generica;
+STRINGS => \".*\"(\.\".*\")+|\".*\"
+
+operador_numerico =>  add | sub | mul | div | mod 
+operador_logico   => and | or | xor
+operador_relacional => gt | lt | eq | ne | ge | le
+operador_generico => operador_numerico | operador_relacional | operador_relacional
+
+
+
+
+
+
+

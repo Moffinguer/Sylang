@@ -12,55 +12,84 @@ TODO:
 
 ## Sintax of Syl
 
-Here we have an examplo of a program written on Syl:
+Here we will define the evolution of the language
 
-```java
-bop function |{
-    int number;
-    double another_number := 4.;
-    numero := otro_numero * -5 +14/.9;
+1. Version 1.0.0 _Mithrandir_: Imperative Language
+```
 
-    # This check does not have sense
-    bool check := numero gt otro_numero and numero df 5 or 5 lt 4;
+natural number := 5;
+real numberFloat := 5.2;
 
-    println "Texto". numero;
-    comeback numero;
-}|
+numberFloat := number add number sub 2 add numberFloat mul 5;
 
-if TRUE then |{
-    # Something unnecesary
-}|
-but
-|{
-    # Something even more unnecesary
-}|
+if numberFloat gt 10 or number eq 5 then
+{
+    print "Number evaluated"; # This comment does not appear
+}
 
-int a = 5;
-for( int i=0; i<10; i+=1 ) |{
-    a = a>>2;
-}|
-
-unless function eq 5 then
-|{
-    a = a&&1;
-}|
-but unless 2 df 2 then
-|{
-    a-= a mod 3;
-}|
+natural i = 0;
+while i le 20 then
+{
+    #**
+    # This is a commented block
+    # pretty big
+    #**
+    print i;
+}
 ```
 
 ### Reserved Keywords
+| natural | real | if | then | while |
+|:---:|:---:|:---:|:---:|:---:|
+| **add** | **sub** | **mul** | **div** | **gt** |
+| **lt** | **eq** | **ne** | **ge** | **le** |
+| **and** | **or** | **xor** | **not** |  |
+
 
 ### Operators
 
+- Addition[ **+** ]: _\<expresion>_ add _\<expresion>_
+- subtract[ **-** ]: _\<expresion>_ sub _\<expresion>_ | sub _\<expresion>_
+- Multiply[ **\*** ]: _\<expresion>_ mul _\<expresion>_
+- Division[ **/** ]: _\<expresion>_ div _\<expresion>_
+- Greater than[ **\>** ]: _\<expresion>_ gt _\<expresion>_
+- Less than[ **\<** ]: _\<expresion>_ lt _\<expresion>_
+- Equal to[ **==** ]: _\<expresion>_ eq _\<expresion>_
+- Not equal to[ **!=** ]: _\<expresion>_ ne _\<expresion>_
+- Greater than or equal to[ **\>=** ]: _\<expresion>_ ge _\<expresion>_
+- Less than or equal to[ **\<=** ]: _\<expresion>_ le _\<expresion>_
+- And [ **&&** ]: _\<expresion>_ and _\<expresion>_
+- Or [ **||** ]: _\<expresion>_ or _\<expresion>_
+- Xor [ **^** ]: _\<expresion>_ xor _\<expresion>_
+- Not [ **!** ]: not _\<expresion>_
+
 ### Instructions
+
+- Binary Conditional Estatement:
+```
+    if ... then
+    {
+        # Do something
+    }
+``` 
+- Control Flow:
+```
+    while ... then
+    {
+        # Do something
+    }
+```
 
 ### Scope of language
 
 We can group this lang on the **Imperative** class, also being **procedural** and **functional**.
 TODO:
-- [ ] Object-Oriented support
+- [ ] Imperative
+- [ ] Functional
+- [ ] Transpiler to C
+- [ ] POO
+
+
 
 
 
