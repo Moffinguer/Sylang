@@ -1,0 +1,5 @@
+BEGIN
+
+int a:=5;
+
+END

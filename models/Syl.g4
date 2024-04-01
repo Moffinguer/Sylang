@@ -1,9 +1,10 @@
 grammar Syl;
 
 
-// SORTING AND CLEARING FILE, SPLIT INTO OTHER FILES
-
-// Sintax analysis 
+/*
+ * Parser Rules
+ */
+ 
 prog: functions*
       main
       functions*
@@ -11,58 +12,68 @@ prog: functions*
 
 functions: DEF_FUNC value_type ID OPEN_BLOCK
            instruction+
-           RETURN expression
+           (RETURN expression END_OF_INSTRUCTION)?
            CLOSE_BLOCK;
 instruction: var_declaration | var_assign;
-var_declaration: value_type ID END_OF_INSTRUCTION 
+var_declaration: variable_type ID END_OF_INSTRUCTION
                 |
-                 value_type var_assign; // requires modification in the future
+                 variable_type var_assign; // requires modification in the future
 main: BEGIN
        instruction+
       END;
 var_assign: ID ASSIGN expression END_OF_INSTRUCTION;
-// Sintax analysis 
 
-// Agrupaciones
-value_type: INTEGER |
-            DOUBLE |
-            STRING |
-            BOOLEAN
+// Groups
+value_type: variable_type
             |
             VOID;
-//
+variable_type: INTEGER |
+            DOUBLE |
+            STRING |
+            BOOLEAN;
+number: DECIMAL_NUMBER | FLOATING_NUMBER | HEX_NUMBER;
+boolean_variable: TRUE | FALSE;
 
+//
+expression: OPEN_ARGUMENTS+ expression CLOSE_ARGUMENTS+
+            |
+            ID
+            |
+            number
+            |
+            boolean_variable |
+            expression PLUS expression |
+            expression MINUS expression | MINUS expression |
+            expression MULTIPLY expression |
+               expression DIVIDE expression |
+                expression MODULE expression |
+                 expression AND expression |
+                 expression OR expression |
+                  NOT expression |
+                   expression EQUALS expression |
+                    expression NOT_EQUALS expression |
+                     expression GREATER_THAN expression |
+                      expression LESS_THAN expression |
+                       expression LESS_EQUAL expression |
+                     expression GREATER_EQUAL expression;
+
+
+
+/*
+ * Lexer Rules
+ */
 
 // Skipeable elements
-
-//saltar esto
 WS
 :
  [ \t\r\n]+ -> skip
 ;
-// Skipeable elements
+COMMENTS: '#' -> skip;
 
-// Palabras clave
-VOID: 'void';
-INTEGER: 'int'; // All natural and negative numbers
-BEGIN: 'BEGIN';
-END: 'END';
-DEF_FUNC: 'function';
-ST_OUTPUT: 'print';
-STRING: 'string';
-BOOLEAN: 'boolean';
-DOUBLE: 'real'; // All floating point numbers
-TRUE: 'T';
-FALSE: 'F';
-IF: 'if';
-RETURN: 'returns';
-BREAK: 'stop';
-CONTINUE: 'next';
-WHILE: 'while';
-THEN: 'then';
+
+// Operators
 PLUS: 'add';
 MINUS: 'sub';
-NEGATIVE: 'neg';
 MULTIPLY: 'mul';
 DIVIDE: 'div';
 MODULE: 'mod';
@@ -75,20 +86,40 @@ LESS_EQUAL: 'le';
 AND: 'and';
 OR: 'or';
 NOT: 'not';
-XOR: 'xor';
+
+// Symbols
 ASSIGN: ':=';
 OPEN_BLOCK: '{';
 CLOSE_BLOCK: '}';
 OPEN_ARGUMENTS: '(';
 CLOSE_ARGUMENTS: ')';
-END_OF_INSTRUCTION: ';'; // End of instruction line
+END_OF_INSTRUCTION: ';';
 
-// Palabras clave
+// Keywords
+VOID: 'void';
+INTEGER: 'int'; // All natural and negative numbers
+BEGIN: 'BEGIN';
+END: 'END';
+DEF_FUNC: 'function';
+ST_OUTPUT: 'print';
+STRING: 'string';
+BOOLEAN: 'boolean';
+DOUBLE: 'real'; // All floating point numbers
+IF: 'if';
+RETURN: 'returns';
+BREAK: 'stop';
+CONTINUE: 'next';
+WHILE: 'while';
+THEN: 'then';
 
-// Expresiones completas
+// Complex Expressions
 ID: [a-zA-Z][0-9a-zA-Z]*;
 DECIMAL_NUMBER: [0-9]+;
-FLOATING_NUMBER: [0-9]+'.'[0-9]+
+FLOATING_NUMBER: DECIMAL_NUMBER'.'DECIMAL_NUMBER
                  |
-                 '.'[0-9]+
+                 '.'DECIMAL_NUMBER
                  ;
+HEX_NUMBER: [0][xX][0-9a-fA-F]+;
+OCTAL_NUMBER: [0]DECIMAL_NUMBER;
+TRUE: 'T' | 'TRUE';
+FALSE: 'F' | 'FALSE';
