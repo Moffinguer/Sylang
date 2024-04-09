@@ -33,11 +33,12 @@ def main(argv):
     else:
         vinterp = VisitorInterp()
         vinterp.visit(tree)
-        if vinterp.error != "":
+        error_msg = vinterp.get_error()
+        if error_msg == "":
             with open(argv[1].replace(".syl",".c"), "w") as file:
                 file.write(format_code_with_clang_format(vinterp.get_output()))
         else:
-            print(vinterp.error)
+            print(error_msg)
 
 if __name__ == '__main__':
     main(sys.argv)

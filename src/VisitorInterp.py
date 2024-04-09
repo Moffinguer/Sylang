@@ -20,6 +20,7 @@ class VisitorInterp(SylVisitor):
         self.last_expression = ""
         self.error = ""
         self.used_functions = {}
+        self.last_original_expression = ""
 
     def set_indent(self, indent):
         self.indent += indent
@@ -29,6 +30,9 @@ class VisitorInterp(SylVisitor):
     
     def get_output(self):
         return self.output
+
+    def get_error(self):
+        return self.error
 
     def visitMain(self, ctx:SylVisitor.visitMain):       
         for i in range(0, ctx.getChildCount()):
@@ -70,13 +74,15 @@ class VisitorInterp(SylVisitor):
                 next
             self.visit(ctx.getChild(i))
         if self.last_expression != "":
-            type_expression = evaluateExpression(self.last_expression, self.used_variables)
+            start = ctx.start
+            type_expression, error = evaluateExpression(self.last_expression, self.used_variables, self.error, start.line, start.column)
+            self.error = error
             if type_expression != self.used_variables[self.last_variable]["type"]:
-                start = ctx.start
-                self.error += ErrorControl(start.line, start.column, f"Expected a {self.used_variables[self.last_variable]['type']} expression. Got a {type_expression} instead").__str__()
+                self.error += ErrorControl(start.line, start.column, f"Expected a {self.translator[self.used_variables[self.last_variable]['type']]['syl_translation']} expression. Got a {self.translator[type_expression]['syl_translation']} instead",  f"{self.last_original_expression}").__str__()
                 self.error += "\n"
             self.used_variables[self.last_variable]["value_type"] = type_expression
             self.last_expression = ""
+            self.last_original_expression = ""
         self.set_newline()
         self.is_assign = False
 
@@ -98,6 +104,7 @@ class VisitorInterp(SylVisitor):
                     self.last_expression += " " + self.translator[node.getText()]["c_translation"] + " "
                 else:
                     self.last_expression += " " + node.getText() + " "
+            self.last_original_expression += " " + node.getText() + " "
 
     def visitDigit(self, ctx:SylVisitor.visitDigit):
         digit = ""
@@ -106,12 +113,14 @@ class VisitorInterp(SylVisitor):
             digit += node.getText()
         self.output += digit
         self.last_expression += digit
+        self.last_original_expression += " " + digit + " "
 
     def visitBoolean_values(self, ctx:SylVisitor.visitBoolean_values):
         boolean_value = ""
         for i in range(0, ctx.getChildCount()):
             node = ctx.getChild(i)
             boolean_value += " " + self.translator[node.getText()]["c_translation"] + " "
+            self.last_original_expression += " " + node.getText() + " "
         self.output += boolean_value
         self.last_expression += boolean_value
 
@@ -133,13 +142,16 @@ class VisitorInterp(SylVisitor):
     def visitIf_block(self, ctx:SylVisitor.visitIf_block):
         self.output += "" + self.indent*"\t" + f"if( "
         self.visit(ctx.getChild(1))
-        if evaluateExpression(self.last_expression, self.used_variables) != "int":
-            start = ctx.start
-            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement").__str__()
+        start = ctx.start
+        type_condition, error = evaluateExpression(self.last_expression, self.used_variables, self.error,start.line, start.column )
+        self.error = error
+        if type_condition != "int":
+            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement", f"if {self.last_original_expression} then").__str__()
             self.error += "\n"
         self.output += self.last_expression + " ){"
         self.set_newline()
         self.last_expression = ""
+        self.last_original_expression = ""
         for i in range(3, ctx.getChildCount()):
             node = ctx.getChild(i)
             if node.getText() in self.translator:
@@ -154,19 +166,24 @@ class VisitorInterp(SylVisitor):
                     self.set_newline()
             else:
                 self.last_expression = ""
+                self.last_original_expression = ""
                 self.visit(ctx.getChild(i))
                 self.last_expression = ""
+                self.last_original_expression = ""
 
     def visitWhile_block(self, ctx:SylVisitor.visitWhile_block):
         self.output += "" + self.indent*"\t" + f"while( "
         self.visit(ctx.getChild(1))
-        if self.last_expression != "int":
-            start = ctx.start
-            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement").__str__()
+        start = ctx.start
+        type_condition, error = evaluateExpression(self.last_expression, self.used_variables, self.error,start.line, start.column )
+        self.error = error
+        if type_condition != "int":
+            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement",  f"while {self.last_original_expression} then").__str__()
             self.error += "\n"
         self.output += self.last_expression + " ){"
         self.set_newline()
         self.last_expression = ""
+        self.last_original_expression = ""
         for i in range(3, ctx.getChildCount()):
             node = ctx.getChild(i)
             if node.getText() in self.translator:
@@ -178,8 +195,10 @@ class VisitorInterp(SylVisitor):
                     self.set_newline()
             else:
                 self.last_expression = ""
+                self.last_original_expression = ""
                 self.visit(ctx.getChild(i))
                 self.last_expression = ""
+                self.last_original_expression = ""
 
     def visitFunctions(self, ctx:SylVisitor.visitFunctions):
         function_definition = self.translator[ctx.getChild(0).getText()]["c_translation"]
