@@ -1,0 +1,17 @@
+function void pintaTexto()
+{
+    print("Hola Mundo");
+}
+
+function real multiplicaNumeros(int a, int b)
+{
+    real multiplicacion := a mul b;
+    return multiplicacion;
+}
+
+BEGIN
+
+pintaTexto();
+real multiplicacion:= multiplicaNumeros(2,5); 
+
+END

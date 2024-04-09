@@ -2,39 +2,222 @@ import sys
 from antlr4 import *
 from SylParser import SylParser
 from SylVisitor import SylVisitor
+from Helpers import HelperTranslator, evaluateExpression, ErrorControl
+
 
 class VisitorInterp(SylVisitor):
 
-    def visitProg(self, ctx:SylParser.ProgContext):
-        for i in range(0, ctx.getChildCount()):
-            print(self.visit(ctx.getChild(i)))
+    def __init__(self):
+        super().__init__()
+        self.indent = 0
+        self.translator = HelperTranslator.translator
+        self.output = ""
+        self.last_type = ""
+        self.last_variable = ""
+        self.is_assign = False
+        self.is_function = False
+        self.used_variables = {}
+        self.last_expression = ""
+        self.error = ""
+        self.used_functions = {}
 
-    def visitMain(self, ctx:SylParser.MainContext):
-        print(ctx.getChild(0).getText())
+    def set_indent(self, indent):
+        self.indent += indent
 
-        for i in range(1, ctx.getChildCount()-1):
-            print(self.visit(ctx.getChild(i)))
-
-        print(ctx.getChild(ctx.getChildCount()-1).getText())
-
-    def visitFunctions(self, ctx:SylParser.FunctionsContext):
-        for i in range(0, ctx.getChildCount()):
-            print(self.visit(ctx.getChild(i)))
-
-    def visitInstruction(self, ctx:SylParser.InstructionContext):
-        for i in range(0, ctx.getChildCount()):
-            print(self.visit(ctx.getChild(i)))
-
-    def visitVar_assign(self, ctx:SylParser.Var_assignContext):
-        for i in range(0, ctx.getChildCount()):
-            print(self.visit(ctx.getChild(i)))
-
-    def visitExpression(self, ctx:SylParser.ExpressionContext):
-        for i in range(0, ctx.getChildCount()):
-            print(ctx.getChild(i).getText())
-
-    def visitVar_declaration(self, ctx:SylParser.Var_declarationContext):
-        for i in range(0, ctx.getChildCount()):
-            print(ctx.getChild(i).getText())
+    def set_newline(self):
+        self.output += "\n"
     
-    
+    def get_output(self):
+        return self.output
+
+    def visitMain(self, ctx:SylVisitor.visitMain):       
+        for i in range(0, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            if node.getChildCount() == 0:
+                try:
+                    transform = self.translator[node.getText()]
+                    self.set_indent(transform["indent"])
+                    self.output += transform["c_translation"]
+                    self.set_newline()
+                except KeyError:
+                    self.output += ""
+            self.visit(ctx.getChild(i))
+
+    def visitInstruction(self, ctx:SylVisitor.visitInstruction):
+        self.output += "" + self.indent*"\t"
+        for i in range(0, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            if node.getChildCount() == 0:
+                next
+            self.visit(ctx.getChild(i))
+        self.set_newline()
+
+    def visitStandard_output(self, ctx:SylVisitor.visitStandard_output):
+        self.output += "" + self.indent*"\t" + f"printf({ctx.getChild(2)});" 
+        self.set_newline()
+
+    def visitAssign(self, ctx:SylVisitor.visitAssign):
+        self.output += "" + self.indent*"\t"
+        self.is_assign = True
+        for i in range(0, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            if node.getChildCount() == 0:
+                try:
+                    transform = self.translator[node.getText()]
+                    self.output += transform["c_translation"]
+                except KeyError:
+                    self.output += node.getText()
+                next
+            self.visit(ctx.getChild(i))
+        if self.last_expression != "":
+            type_expression = evaluateExpression(self.last_expression, self.used_variables)
+            if type_expression != self.used_variables[self.last_variable]["type"]:
+                start = ctx.start
+                self.error += ErrorControl(start.line, start.column, f"Expected a {self.used_variables[self.last_variable]['type']} expression. Got a {type_expression} instead").__str__()
+                self.error += "\n"
+            self.used_variables[self.last_variable]["value_type"] = type_expression
+            self.last_expression = ""
+        self.set_newline()
+        self.is_assign = False
+
+    def visitExpression(self, ctx:SylVisitor.visitExpression):
+        for i in range(0, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            if node.getChildCount() not in [0,1]:
+                self.visit(node)
+                continue
+            if self.is_assign:
+                if node.getText() in self.translator:
+                    self.output += " " + self.translator[node.getText()]["c_translation"] + " "
+                    self.last_expression += " " + self.translator[node.getText()]["c_translation"] + " "
+                else:
+                    self.output += " " + node.getText() + " "
+                    self.last_expression += " " + node.getText() + " "
+            else:
+                if node.getText() in self.translator:
+                    self.last_expression += " " + self.translator[node.getText()]["c_translation"] + " "
+                else:
+                    self.last_expression += " " + node.getText() + " "
+
+    def visitDigit(self, ctx:SylVisitor.visitDigit):
+        digit = ""
+        for i in range(0, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            digit += node.getText()
+        self.output += digit
+        self.last_expression += digit
+
+    def visitBoolean_values(self, ctx:SylVisitor.visitBoolean_values):
+        boolean_value = ""
+        for i in range(0, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            boolean_value += " " + self.translator[node.getText()]["c_translation"] + " "
+        self.output += boolean_value
+        self.last_expression += boolean_value
+
+    def visitVariable_type(self, ctx:SylVisitor.visitVariable_type):
+        transform = self.translator[ctx.getChild(0).getText()]
+        self.output += transform["c_translation"] + " "
+
+        if self.is_assign:
+            self.last_type = transform["c_translation"]
+
+    def visitVariableId(self, ctx:SylVisitor.visitVariableId):
+        variable = ctx.getText()
+        self.output += variable + " "
+        
+        if self.is_assign:
+            self.used_variables[variable] = { "type": self.last_type }
+            self.last_variable = variable
+
+    def visitIf_block(self, ctx:SylVisitor.visitIf_block):
+        self.output += "" + self.indent*"\t" + f"if( "
+        self.visit(ctx.getChild(1))
+        if evaluateExpression(self.last_expression, self.used_variables) != "int":
+            start = ctx.start
+            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement").__str__()
+            self.error += "\n"
+        self.output += self.last_expression + " ){"
+        self.set_newline()
+        self.last_expression = ""
+        for i in range(3, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            if node.getText() in self.translator:
+                if node.getText() == "else":
+                    self.output += "\n" + self.indent*"\t" + "} else {"
+                    self.set_newline()
+                elif node.getText() == "fi":
+                    self.output += "\n" + self.indent*"\t" + "}"
+                    self.set_newline()
+                elif node.getText() == "then":
+                    self.output += "\n" + self.indent*"\t" + "{"
+                    self.set_newline()
+            else:
+                self.last_expression = ""
+                self.visit(ctx.getChild(i))
+                self.last_expression = ""
+
+    def visitWhile_block(self, ctx:SylVisitor.visitWhile_block):
+        self.output += "" + self.indent*"\t" + f"while( "
+        self.visit(ctx.getChild(1))
+        if self.last_expression != "int":
+            start = ctx.start
+            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement").__str__()
+            self.error += "\n"
+        self.output += self.last_expression + " ){"
+        self.set_newline()
+        self.last_expression = ""
+        for i in range(3, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            if node.getText() in self.translator:
+                if node.getText() == "then":
+                    self.output += "\n" + self.indent*"\t" + "{"
+                    self.set_newline()
+                elif node.getText() == "end":
+                    self.output += "\n" + self.indent*"\t" + "}"
+                    self.set_newline()
+            else:
+                self.last_expression = ""
+                self.visit(ctx.getChild(i))
+                self.last_expression = ""
+
+    def visitFunctions(self, ctx:SylVisitor.visitFunctions):
+        function_definition = self.translator[ctx.getChild(0).getText()]["c_translation"]
+        type_definition = self.translator[ctx.getChild(1).getText()]["c_translation"]
+        function_name = ctx.getChild(2).getText()
+
+        self.used_functions[function_name]["type"] = type_definition
+        self.used_functions[function_name]["vars"] = []
+        number_of_arguments = 0
+        last_children = 0
+        for i in range(3, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            if node.getText() == "{":
+                self.output += "{\n"
+                last_children = i + 1
+                break
+            if node.getText() in self.translator:
+                self.output += " " + self.translator[node.getText()]["c_translation"] + " "
+                if node.getText() not in ["(",")", ","]:
+                    self.used_functions[function_name]["vars"].append({"type": node})
+            else:
+                self.output += " " +node.getText() + " "
+                self.used_functions[function_name]["vars"][number_of_arguments]["name"] = node.getText()
+                number_of_arguments += 1
+        self.output += "{"
+        self.set_newline()
+        self.used_functions[function_name]["number_of_arguments"] = number_of_arguments
+        self.is_function = True
+        for i in range(last_children, ctx.getChildCount() - 1):
+            node = ctx.getChild(i)
+            if "returns" in node.getText():
+                self.output += " " + "return "
+                self.visit(ctx.getChild(i+ 1))  
+                self.output +=" ;"
+                break
+            else:
+                self.visit(ctx.getChild(i))
+
+        self.is_function = False
+
+        self.output += "}\n"

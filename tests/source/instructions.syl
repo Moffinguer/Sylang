@@ -1,0 +1,20 @@
+BEGIN
+
+int j:= 2;
+
+if 5 gt 2 then
+    print("5 es mayor que 2");
+    print("owo");
+    j := 2 add j;
+else
+    print("No mibida");
+fi
+
+int i:=0;
+while i lt 10 then
+    print("uwu");
+    print("owo");
+    i := i add 1;
+end
+
+END

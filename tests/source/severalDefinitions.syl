@@ -1,0 +1,8 @@
+BEGIN
+
+int a:=5;
+boolean booleano := a gt 10;
+int otroEntero:=a;
+
+
+END
