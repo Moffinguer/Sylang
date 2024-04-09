@@ -2,3 +2,11 @@
 /models/.antlr/*
 **/__pycache__/*
 **/.antlr/*
+/src/*.syl
+/src/*.c
+/src/Syl.interp
+/src/Syl.tokens
+/src/SylLexer*
+/src/SylListener.py
+/src/SylParser.py
+/src/SylVisitor.py
