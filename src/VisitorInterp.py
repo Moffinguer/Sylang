@@ -146,7 +146,7 @@ class VisitorInterp(SylVisitor):
         type_condition, error = evaluateExpression(self.last_expression, self.used_variables, self.error,start.line, start.column )
         self.error = error
         if type_condition != "int":
-            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement", f"if {self.last_original_expression} then").__str__()
+            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement", f" if {self.last_original_expression} then").__str__()
             self.error += "\n"
         self.output += self.last_expression + " ){"
         self.set_newline()
@@ -178,7 +178,7 @@ class VisitorInterp(SylVisitor):
         type_condition, error = evaluateExpression(self.last_expression, self.used_variables, self.error,start.line, start.column )
         self.error = error
         if type_condition != "int":
-            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement",  f"while {self.last_original_expression} then").__str__()
+            self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement",  f" while {self.last_original_expression} then").__str__()
             self.error += "\n"
         self.output += self.last_expression + " ){"
         self.set_newline()

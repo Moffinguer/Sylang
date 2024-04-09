@@ -35,7 +35,7 @@ def evaluateExpression(expression, vars = {}, errors = "", line = 0, column = 0)
                 left_member, right_member = (expression[:index], expression[index+2:])
                 for term in right_member.split():
                     if isinstance(eval(term), float):
-                        errors += ErrorControl(line, column, f"Cannot evaluate expression with real number", f"(...{HelperTranslator.translator[operator]['syl_translation']} {term}").__str__()
+                        errors += ErrorControl(line, column, f"Cannot evaluate expression with real number", f" ...{HelperTranslator.translator[operator]['syl_translation']} {term}").__str__()
                         break
                     if sub_term == "" and (isinstance(eval(term), int) or isinstance(eval(term), bool)):
                         break 
@@ -46,7 +46,7 @@ def evaluateExpression(expression, vars = {}, errors = "", line = 0, column = 0)
                         close_parentesis = sub_term.count(")")
                         if (open_parentesis - close_parentesis) == 0:
                             if isinstance(eval(sub_term), float):
-                                errors += ErrorControl(line, column, f"Cannot evaluate expression with real number", f"(...{HelperTranslator.translator[operator]['syl_translation']} {sub_term}").__str__()
+                                errors += ErrorControl(line, column, f"Cannot evaluate expression with real number", f" ...{HelperTranslator.translator[operator]['syl_translation']} {sub_term}").__str__()
                             break
                         continue
                     sub_term += term
@@ -54,7 +54,7 @@ def evaluateExpression(expression, vars = {}, errors = "", line = 0, column = 0)
                     sub_term = ""
                     for term in left_member.split()[::-1]:
                         if isinstance(eval(term), float):
-                            errors += ErrorControl(line, column, f"Cannot evaluate expression with real number", f"({sub_term} {HelperTranslator.translator[operator]['syl_translation']}...").__str__()
+                            errors += ErrorControl(line, column, f"Cannot evaluate expression with real number", f" {term} {HelperTranslator.translator[operator]['syl_translation']}...").__str__()
                             break
                         if sub_term == "" and (isinstance(eval(term), int) or isinstance(eval(term), bool)):
                             break
@@ -64,13 +64,15 @@ def evaluateExpression(expression, vars = {}, errors = "", line = 0, column = 0)
                             close_parentesis = sub_term.count("(")
                             if (open_parentesis - close_parentesis) == 0:
                                 if isinstance(eval(sub_term), float):
-                                    errors += ErrorControl(line, column, f"Cannot evaluate expression with real number", f"({sub_term} {HelperTranslator.translator[operator]['syl_translation']}...").__str__()
+                                    errors += ErrorControl(line, column, f"Cannot evaluate expression with real number", f" {sub_term} {HelperTranslator.translator[operator]['syl_translation']}...").__str__()
                                 break
                             continue
                         sub_term += term
 
 
     try:
+        for i in ["&&", "||", "!"]:
+            expression = expression.replace(i, HelperTranslator.translator[i]["syl_translation"])
         evaluated_expression = eval(expression)
         if isinstance(evaluated_expression, bool) or isinstance(evaluated_expression, int):
             return "int", errors
