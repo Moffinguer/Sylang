@@ -99,6 +99,13 @@ class ErrorControl():
         error_msg += f"{Fore.GREEN}column:{Fore.RESET} {self.column}"
         return error_msg
 
+    def noFileLoaded():
+        error_msg = f"{Style.BRIGHT}{Fore.YELLOW}No input received{Style.RESET_ALL}"
+        return error_msg
+    
+    def wrongFileExtension(file_name):
+        error_msg = f"{Style.BRIGHT}{Fore.YELLOW}File '{file_name}' is not a .syl file{Style.RESET_ALL}"
+        return error_msg
 class HelperTranslator():
     translator = {
         "BEGIN": { "c_translation": "int main() {", "indent": 1 },

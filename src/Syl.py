@@ -3,7 +3,7 @@ from antlr4 import *
 from SylLexer import SylLexer
 from SylParser import SylParser
 from VisitorInterp import VisitorInterp
-
+from Helpers import ErrorControl
 
 def format_code_with_clang_format(code):
     import shutil
@@ -22,6 +22,14 @@ def format_code_with_clang_format(code):
         return code
 
 def main(argv):
+
+    if len(argv) == 1:
+        print(ErrorControl.noFileLoaded())
+        sys.exit(1)
+    elif argv[1].split(".")[1] != "syl":
+        print(ErrorControl.wrongFileExtension(argv[1]))
+        sys.exit(2)
+
     input = FileStream(argv[1])
     #input = FileStream("src/test.syl")
     lexer = SylLexer(input)
@@ -37,8 +45,10 @@ def main(argv):
         if error_msg == "":
             with open(argv[1].replace(".syl",".c"), "w") as file:
                 file.write(format_code_with_clang_format(vinterp.get_output()))
+            sys.exit(0)
         else:
             print(error_msg)
+            sys.exit(1)
 
 if __name__ == '__main__':
     main(sys.argv)

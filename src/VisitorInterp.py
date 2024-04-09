@@ -21,6 +21,7 @@ class VisitorInterp(SylVisitor):
         self.error = ""
         self.used_functions = {}
         self.last_original_expression = ""
+        self.is_print = True
 
     def set_indent(self, indent):
         self.indent += indent
@@ -58,6 +59,9 @@ class VisitorInterp(SylVisitor):
 
     def visitStandard_output(self, ctx:SylVisitor.visitStandard_output):
         self.output += "" + self.indent*"\t" + f"printf({ctx.getChild(2)});" 
+        if self.is_print:
+            self.output = "#include <stdio.h>\n" + self.output
+            self.is_print = False
         self.set_newline()
 
     def visitAssign(self, ctx:SylVisitor.visitAssign):
