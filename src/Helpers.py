@@ -1,12 +1,25 @@
 import re
-def evaluateExpression(expression, vars = {}, errors = "", line = 0, column = 0):
+def evaluateExpression(expression, vars = {}, errors = "", line = 0, column = 0, used_functions = {}):
     if vars:
         for variable in vars.keys():
-            var_type = vars[variable]["type"]
-            if var_type == "int":
-                expression = expression.replace(variable, "1")
-            elif var_type == "double":
-                expression = expression.replace(variable, "1.0") 
+            try:
+                var_type = vars[variable]["type"]
+                if var_type == "int":
+                    expression = expression.replace(variable, "1")
+                elif var_type == "double":
+                    expression = expression.replace(variable, "1.0")
+            except:
+                errors += ErrorControl(line, column, f"Variable {variable} not defined", f"{expression}").__str__()
+    if used_functions:
+        for function in used_functions.keys():
+            try:
+                function_type = used_functions[function]["type"]
+                if function_type == "int":
+                    expression = expression.replace(function, "1")
+                elif function_type == "double":
+                    expression = expression.replace(function, "1.0")
+            except Exception as e:
+                errors += ErrorControl(line, column, f"Function {function} not defined", f"{expression}").__str__()
 
     for base in [2,10,16]:
         try:

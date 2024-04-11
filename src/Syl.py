@@ -4,6 +4,7 @@ from SylLexer import SylLexer
 from SylParser import SylParser
 from VisitorInterp import VisitorInterp
 from Helpers import ErrorControl
+from SyntaxErrors import CustomSyntaxError
 
 def format_code_with_clang_format(code):
     import shutil
@@ -31,14 +32,16 @@ def main(argv):
         sys.exit(2)
 
     input = FileStream(argv[1])
-    #input = FileStream("src/test.syl")
     lexer = SylLexer(input)
     stream = CommonTokenStream(lexer)
     parser = SylParser(stream)
+
+    error_listener = CustomSyntaxError()
+    parser.removeErrorListeners()
+    parser.addErrorListener(error_listener)
+
     tree = parser.main()
-    if parser.getNumberOfSyntaxErrors() > 0:
-        print("syntax errors")
-    else:
+    if parser.getNumberOfSyntaxErrors() == 0:
         vinterp = VisitorInterp()
         vinterp.visit(tree)
         error_msg = vinterp.get_error()

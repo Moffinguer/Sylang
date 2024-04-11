@@ -4,31 +4,25 @@ grammar Syl;
 main: 
       functions*
       BEGIN
-        (instruction|standard_output|functionCall)*
+        (instruction|standard_output|functionCall END_OF_INSTRUCTION)*
       END
       EOF;
 
-functions: DEF_FUNC function_type functionId OPEN_ARGUMENTS CLOSE_ARGUMENTS OPEN_BLOCK
-           (instruction|standard_output|functionCall)*
+functions: DEF_FUNC VOID functionId OPEN_ARGUMENTS (variable_type variableId )? CLOSE_ARGUMENTS OPEN_BLOCK
+           (instruction|standard_output|functionCall END_OF_INSTRUCTION)+
+           CLOSE_BLOCK |
+            DEF_FUNC VOID functionId OPEN_ARGUMENTS variable_type variableId ( SEPARATOR variable_type variableId)* CLOSE_ARGUMENTS OPEN_BLOCK
+           (instruction|standard_output|functionCall END_OF_INSTRUCTION)+
+           CLOSE_BLOCK |
+           DEF_FUNC variable_type functionId OPEN_ARGUMENTS (variable_type variableId)? CLOSE_ARGUMENTS OPEN_BLOCK
+           (instruction|standard_output|functionCall END_OF_INSTRUCTION)*
            RETURN expression END_OF_INSTRUCTION
            CLOSE_BLOCK |
-           DEF_FUNC VOID functionId OPEN_ARGUMENTS CLOSE_ARGUMENTS OPEN_BLOCK
-           (instruction|standard_output|functionCall)*
-           CLOSE_BLOCK |
-           DEF_FUNC function_type functionId OPEN_ARGUMENTS ID CLOSE_ARGUMENTS OPEN_BLOCK
-           (instruction|standard_output|functionCall)*
+           DEF_FUNC variable_type functionId OPEN_ARGUMENTS variable_type variableId ( SEPARATOR variable_type variableId)* CLOSE_ARGUMENTS OPEN_BLOCK
+           (instruction|standard_output|functionCall END_OF_INSTRUCTION)
            RETURN expression END_OF_INSTRUCTION
-           CLOSE_BLOCK |
-           DEF_FUNC VOID functionId OPEN_ARGUMENTS ID CLOSE_ARGUMENTS OPEN_BLOCK
-           (instruction|standard_output|functionCall)*
-           CLOSE_BLOCK | 
-           DEF_FUNC function_type functionId OPEN_ARGUMENTS ID (SEPARATOR ID)+ CLOSE_ARGUMENTS OPEN_BLOCK
-           (instruction|standard_output|functionCall)*
-           RETURN expression END_OF_INSTRUCTION
-           CLOSE_BLOCK |
-           DEF_FUNC VOID functionId OPEN_ARGUMENTS ID (SEPARATOR ID)+ CLOSE_ARGUMENTS OPEN_BLOCK
-           (instruction|standard_output|functionCall)*
-           CLOSE_BLOCK;
+           CLOSE_BLOCK
+           ;
 
 
 instruction: assign | if_block | while_block;
@@ -36,19 +30,18 @@ assign: variable_type variableId ASSIGN expression END_OF_INSTRUCTION |
         variableId ASSIGN expression END_OF_INSTRUCTION;
 variableId: ID;
 functionId: ID;
-functionCall: functionId OPEN_ARGUMENTS ID (SEPARATOR ID)+ CLOSE_ARGUMENTS | 
-              functionId OPEN_ARGUMENTS ID CLOSE_ARGUMENTS | 
-              functionId OPEN_ARGUMENTS CLOSE_ARGUMENTS;
+functionCall: functionId OPEN_ARGUMENTS CLOSE_ARGUMENTS | 
+              functionId OPEN_ARGUMENTS expression ( SEPARATOR expression)* CLOSE_ARGUMENTS;
 value_type: variable_type;
 function_type: INTEGER | BOOLEAN | DOUBLE;
 
 if_block: IF expression THEN
-          (instruction|standard_output|functionCall)+
+          (instruction|standard_output|functionCall END_OF_INSTRUCTION)+
           END_FI |
           IF expression THEN
-          (instruction|standard_output|functionCall)+
+          (instruction|standard_output|functionCall END_OF_INSTRUCTION)+
           ELSE
-          (instruction|standard_output|functionCall)+
+          (instruction|standard_output|functionCall END_OF_INSTRUCTION)+
           END_FI;
 while_block: WHILE expression THEN
             (instruction|standard_output|functionCall)+
