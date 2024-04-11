@@ -91,11 +91,11 @@ class VisitorInterp(SylVisitor):
 
             self.error = error
             if not self.is_function:
-                if type_expression != self.used_variables[self.last_variable]["type"]:
+                if type_expression != self.used_variables[self.last_variable]["type"] or ( self.used_variables[self.last_variable]["type"] == "int" and type_expression == "real"):
                     self.error += ErrorControl(start.line, start.column, f"Expected a {self.translator[self.used_variables[self.last_variable]['type']]['syl_translation']} expression. Got a {self.translator[type_expression]['syl_translation']} instead",  f"{self.last_original_expression}").__str__()
                 self.used_variables[self.last_variable]["value_type"] = type_expression
             else:
-                if type_expression != self.vars_in_function[self.last_variable]["type"]:
+                if type_expression != self.vars_in_function[self.last_variable]["type"] and ( self.vars_in_function[self.last_variable]["type"] == "int" and type_expression == "real"):
                     self.error += ErrorControl(start.line, start.column, f"Expected a {self.translator[self.vars_in_function[self.last_variable]['type']]['syl_translation']} expression. Got a {self.translator[type_expression]['syl_translation']} instead",  f"{self.last_original_expression}").__str__()
                 self.vars_in_function[self.last_variable]["value_type"] = type_expression
 
@@ -164,6 +164,16 @@ class VisitorInterp(SylVisitor):
                         self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Variable {variable} is already defined", "").__str__()
                     else:
                         self.error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()        
+            else:
+                if variable not in self.used_variables and variable not in self.used_functions:   
+                    self.used_variables[variable] = { "type": self.last_type }
+                    self.last_variable = variable
+                else:
+                    if variable in self.used_variables:
+                        self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Variable {variable} is already defined", "").__str__()
+                    else:
+                        self.error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()                    
+    
     def visitIf_block(self, ctx:SylVisitor.visitIf_block):
         self.output += "" + self.indent*"\t" + f"if( "
         self.visit(ctx.getChild(1))
@@ -273,13 +283,13 @@ class VisitorInterp(SylVisitor):
         for i in range(instruccion_sets, ctx.getChildCount() - 1):
             self.visit(ctx.getChild(i))
             if ctx.getChild(i).getText() == "returns":
-                self.output += "returns "
+                self.output += "return "
                 self.visit(ctx.getChild(i + 1))
                 self.output += ";"
                 break
         self.output += "}\n\n"
         self.is_function = False
-        self.last_variable = ""
+        #self.last_variable = ""
         self.last_original_expression = ""
         self.last_type = ""
         self.last_expression = ""

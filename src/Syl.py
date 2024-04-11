@@ -32,6 +32,7 @@ def main(argv):
         sys.exit(2)
 
     input = FileStream(argv[1])
+    
     lexer = SylLexer(input)
     stream = CommonTokenStream(lexer)
     parser = SylParser(stream)

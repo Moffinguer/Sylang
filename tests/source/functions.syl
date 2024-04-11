@@ -6,12 +6,12 @@ function void pintaTexto()
 function real multiplicaNumeros(int a, int b)
 {
     real multiplicacion := a mul b;
-    return multiplicacion;
+    returns multiplicacion;
 }
 
 BEGIN
 
-pintaTexto()
+pintaTexto();
 real multiplicacion:= multiplicaNumeros(2,5); 
 
 END
