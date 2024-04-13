@@ -56,12 +56,22 @@ class VisitorInterp(SylVisitor):
         for i in range(0, ctx.getChildCount()):
             node = ctx.getChild(i)
             if node.getChildCount() == 0:
-                next
+                continue
             self.visit(ctx.getChild(i))
         self.set_newline()
 
     def visitStandard_output(self, ctx:SylVisitor.visitStandard_output):
-        self.output += "" + self.indent*"\t" + f"printf({ctx.getChild(2)});" 
+        self.output += "" + self.indent*"\t" + f"printf({ctx.getChild(2)}"
+        for i in range(3, ctx.getChildCount()):
+            node = ctx.getChild(i)
+            if node.getText() == ")":
+                self.output += ");"
+                break
+            if node.getText() == ",":
+                self.output += " , "
+                continue
+            self.visit(node)
+            
         if self.is_print:
             self.output = "#include <stdio.h>\n" + self.output
             self.is_print = False
@@ -69,8 +79,8 @@ class VisitorInterp(SylVisitor):
 
     def visitAssign(self, ctx:SylVisitor.visitAssign):
         self.output += "" + self.indent*"\t"
-        self.last_variable = ""
-        self.is_assign = True
+        self.is_assign = ctx.getChild(0).getText() in [ "int", "real", "boolean"]
+        self.last_variable = ctx.getChild(0).getText() if not self.is_assign else ""
         for i in range(0, ctx.getChildCount()):
             node = ctx.getChild(i)
             if node.getChildCount() == 0:
@@ -79,7 +89,7 @@ class VisitorInterp(SylVisitor):
                     self.output += transform["c_translation"]
                 except KeyError:
                     self.output += node.getText()
-                next
+                continue
             self.visit(ctx.getChild(i))
         if self.last_expression != "":
             start = ctx.start
@@ -120,8 +130,10 @@ class VisitorInterp(SylVisitor):
                     self.last_expression += " " + node.getText() + " "
             else:
                 if node.getText() in self.translator:
+                    self.output += " " + self.translator[node.getText()]["c_translation"] + " "
                     self.last_expression += " " + self.translator[node.getText()]["c_translation"] + " "
                 else:
+                    self.output += " " + node.getText() + " "
                     self.last_expression += " " + node.getText() + " "
             self.last_original_expression += " " + node.getText() + " "
 
@@ -186,7 +198,7 @@ class VisitorInterp(SylVisitor):
         if type_condition != "int":
             self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement", f" if {self.last_original_expression} then").__str__()
             self.error += "\n"
-        self.output += self.last_expression + " ){"
+        self.output += " ){"
         self.set_newline()
         self.last_expression = ""
         self.last_original_expression = ""
@@ -222,7 +234,7 @@ class VisitorInterp(SylVisitor):
         if type_condition != "int":
             self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement",  f" while {self.last_original_expression} then").__str__()
             self.error += "\n"
-        self.output += self.last_expression + " ){"
+        self.output += " ){"
         self.set_newline()
         self.last_expression = ""
         self.last_original_expression = ""

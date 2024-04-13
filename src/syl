@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 from antlr4 import *
 from SylLexer import SylLexer
@@ -24,15 +26,16 @@ def format_code_with_clang_format(code):
 
 def main(argv):
 
-    if len(argv) == 1:
-        print(ErrorControl.noFileLoaded())
-        sys.exit(1)
-    elif argv[1].split(".")[1] != "syl":
-        print(ErrorControl.wrongFileExtension(argv[1]))
-        sys.exit(2)
+    # if len(argv) == 1:
+    #     print(ErrorControl.noFileLoaded())
+    #     sys.exit(1)
+    # elif argv[1].split(".")[1] != "syl":
+    #     print(ErrorControl.wrongFileExtension(argv[1]))
+    #     sys.exit(2)
 
     input = FileStream(argv[1])
-    
+    #input = FileStream("src/test.syl")
+
     lexer = SylLexer(input)
     stream = CommonTokenStream(lexer)
     parser = SylParser(stream)

@@ -47,8 +47,8 @@ while_block: WHILE expression THEN
             (instruction|standard_output|functionCall)+
             END_WHILE_FOR;
 
-standard_output: //ST_OUTPUT OPEN_ARGUMENTS expression CLOSE_ARGUMENTS END_OF_INSTRUCTION|
-            ST_OUTPUT OPEN_ARGUMENTS STRING CLOSE_ARGUMENTS END_OF_INSTRUCTION;
+standard_output: ST_OUTPUT OPEN_ARGUMENTS STRING CLOSE_ARGUMENTS END_OF_INSTRUCTION |
+                 ST_OUTPUT OPEN_ARGUMENTS STRING SEPARATOR expression ( SEPARATOR expression )+ CLOSE_ARGUMENTS END_OF_INSTRUCTION;
 
 expression: digit |
             variableId |
