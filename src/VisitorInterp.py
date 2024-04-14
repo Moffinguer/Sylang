@@ -49,7 +49,8 @@ class VisitorInterp(SylVisitor):
                 except KeyError:
                     self.output += ""
             self.visit(ctx.getChild(i))
-        self.error = self.error.strip()
+        import re
+        self.error = re.sub(r'\n+','\n',self.error.strip())
 
     def visitInstruction(self, ctx:SylVisitor.visitInstruction):
         self.output += "" + self.indent*"\t"
@@ -95,11 +96,11 @@ class VisitorInterp(SylVisitor):
             start = ctx.start
             
             if not self.is_function:
-                type_expression, error = evaluateExpression(self.last_expression, self.used_variables, self.error,start.line, start.column, self.used_functions  )
+                type_expression, error = evaluateExpression(self.last_expression, self.used_variables, "",start.line, start.column, self.used_functions  )
             else:
-                type_expression, error = evaluateExpression(self.last_expression, self.vars_in_function, self.error,start.line, start.column, self.used_functions  )
+                type_expression, error = evaluateExpression(self.last_expression, self.vars_in_function, "",start.line, start.column, self.used_functions  )
 
-            self.error = error
+            self.error += error
             if not self.is_function:
                 if type_expression != self.used_variables[self.last_variable]["type"] or ( self.used_variables[self.last_variable]["type"] == "int" and type_expression == "real"):
                     self.error += ErrorControl(start.line, start.column, f"Expected a {self.translator[self.used_variables[self.last_variable]['type']]['syl_translation']} expression. Got a {self.translator[type_expression]['syl_translation']} instead",  f"{self.last_original_expression}").__str__()
@@ -167,34 +168,46 @@ class VisitorInterp(SylVisitor):
         self.output += variable + " "
         
         if self.is_assign:
+            if variable in self.translator.keys():
+                self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Cannot define variable {variable} with a reserved keyword", "").__str__()
+            
             if self.is_function:
                 if variable not in self.vars_in_function and variable not in self.used_functions:   
                     self.vars_in_function[variable] = { "type": self.last_type }
                     self.last_variable = variable
                 else:
+                    error = ""
                     if variable in self.vars_in_function:
                         self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Variable {variable} is already defined", "").__str__()
                     else:
                         self.error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()        
+                    self.error += error
+                    if error:
+                        self.last_variable = variable
             else:
                 if variable not in self.used_variables and variable not in self.used_functions:   
                     self.used_variables[variable] = { "type": self.last_type }
                     self.last_variable = variable
                 else:
+                    error = ""
                     if variable in self.used_variables:
-                        self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Variable {variable} is already defined", "").__str__()
+                        error += ErrorControl(ctx.start.line, ctx.start.column, f"Variable {variable} is already defined", "").__str__()
                     else:
-                        self.error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()                    
-    
+                        error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()                    
+                    self.error += error
+                    if error:
+                        self.last_variable = variable
+
+
     def visitIf_block(self, ctx:SylVisitor.visitIf_block):
         self.output += "" + self.indent*"\t" + f"if( "
         self.visit(ctx.getChild(1))
         start = ctx.start
         if not self.is_function:
-            type_condition, error = evaluateExpression(self.last_expression, self.used_variables, self.error,start.line, start.column, self.used_functions )
+            type_condition, error = evaluateExpression(self.last_expression, self.used_variables, "",start.line, start.column, self.used_functions )
         else:
-            type_condition, error = evaluateExpression(self.last_expression, self.vars_in_function, self.error,start.line, start.column, self.used_functions )
-        self.error = error
+            type_condition, error = evaluateExpression(self.last_expression, self.vars_in_function, "",start.line, start.column, self.used_functions )
+        self.error += error
         if type_condition != "int":
             self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement", f" if {self.last_original_expression} then").__str__()
             self.error += "\n"
@@ -226,10 +239,10 @@ class VisitorInterp(SylVisitor):
         self.visit(ctx.getChild(1))
         start = ctx.start
         if not self.is_function:
-            type_condition, error = evaluateExpression(self.last_expression, self.used_variables, self.error,start.line, start.column, self.used_functions  )
+            type_condition, error = evaluateExpression(self.last_expression, self.used_variables, "",start.line, start.column, self.used_functions  )
         else:
-            type_condition, error = evaluateExpression(self.last_expression, self.vars_in_function, self.error,start.line, start.column, self.used_functions  )        
-        self.error = error
+            type_condition, error = evaluateExpression(self.last_expression, self.vars_in_function, "",start.line, start.column, self.used_functions  )        
+        self.error += error
         
         if type_condition != "int":
             self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement",  f" while {self.last_original_expression} then").__str__()
@@ -258,6 +271,7 @@ class VisitorInterp(SylVisitor):
         function_definition = self.translator[ctx.getChild(0).getText()]["c_translation"]
         type_definition = self.translator[ctx.getChild(1).getText()]["c_translation"]
         function_name = ctx.getChild(2).getText()
+
         if function_name in self.used_functions:
             self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Function {function_name} is already defined", "").__str__()
         else:
@@ -337,9 +351,9 @@ class VisitorInterp(SylVisitor):
         try:
             for argument_index in range(len(self.used_functions[function_name]["arguments"])):
                 if self.is_function:
-                    evaluated_type, error =evaluateExpression(function_arguments[argument_index], self.vars_in_function, self.error, ctx.start.line, ctx.start.column, self.used_functions)
+                    evaluated_type, error =evaluateExpression(function_arguments[argument_index], self.vars_in_function, "", ctx.start.line, ctx.start.column, self.used_functions)
                 else:
-                    evaluated_type, error =evaluateExpression(function_arguments[argument_index], self.used_variables, self.error, ctx.start.line, ctx.start.column, self.used_functions)
+                    evaluated_type, error =evaluateExpression(function_arguments[argument_index], self.used_variables, "", ctx.start.line, ctx.start.column, self.used_functions)
                 
                 self.error += error
 
