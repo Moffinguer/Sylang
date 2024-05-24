@@ -30,14 +30,14 @@ class VisitorInterp(SylVisitor):
 
     def set_newline(self):
         self.output += "\n"
-    
+
     def get_output(self):
         return self.output
 
     def get_error(self):
         return self.error
 
-    def visitMain(self, ctx:SylVisitor.visitMain):       
+    def visitMain(self, ctx:SylVisitor.visitMain):
         for i in range(0, ctx.getChildCount()):
             node = ctx.getChild(i)
             if node.getChildCount() == 0:
@@ -72,7 +72,7 @@ class VisitorInterp(SylVisitor):
                 self.output += " , "
                 continue
             self.visit(node)
-            
+
         if self.is_print:
             self.output = "#include <stdio.h>\n" + self.output
             self.is_print = False
@@ -94,7 +94,7 @@ class VisitorInterp(SylVisitor):
             self.visit(ctx.getChild(i))
         if self.last_expression != "":
             start = ctx.start
-            
+
             if not self.is_function:
                 type_expression, error = evaluateExpression(self.last_expression, self.used_variables, "",start.line, start.column, self.used_functions  )
             else:
@@ -166,13 +166,13 @@ class VisitorInterp(SylVisitor):
     def visitVariableId(self, ctx:SylVisitor.visitVariableId):
         variable = ctx.getText()
         self.output += variable + " "
-        
+
         if self.is_assign:
             if variable in self.translator.keys():
                 self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Cannot define variable {variable} with a reserved keyword", "").__str__()
-            
+
             if self.is_function:
-                if variable not in self.vars_in_function and variable not in self.used_functions:   
+                if variable not in self.vars_in_function and variable not in self.used_functions:
                     self.vars_in_function[variable] = { "type": self.last_type }
                     self.last_variable = variable
                 else:
@@ -180,12 +180,12 @@ class VisitorInterp(SylVisitor):
                     if variable in self.vars_in_function:
                         self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Variable {variable} is already defined", "").__str__()
                     else:
-                        self.error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()        
+                        self.error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()
                     self.error += error
                     if error:
                         self.last_variable = variable
             else:
-                if variable not in self.used_variables and variable not in self.used_functions:   
+                if variable not in self.used_variables and variable not in self.used_functions:
                     self.used_variables[variable] = { "type": self.last_type }
                     self.last_variable = variable
                 else:
@@ -193,7 +193,7 @@ class VisitorInterp(SylVisitor):
                     if variable in self.used_variables:
                         error += ErrorControl(ctx.start.line, ctx.start.column, f"Variable {variable} is already defined", "").__str__()
                     else:
-                        error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()                    
+                        error += ErrorControl(ctx.start.line, ctx.start.column, f"A function {variable} with the same name is already defined.", "").__str__()
                     self.error += error
                     if error:
                         self.last_variable = variable
@@ -241,9 +241,9 @@ class VisitorInterp(SylVisitor):
         if not self.is_function:
             type_condition, error = evaluateExpression(self.last_expression, self.used_variables, "",start.line, start.column, self.used_functions  )
         else:
-            type_condition, error = evaluateExpression(self.last_expression, self.vars_in_function, "",start.line, start.column, self.used_functions  )        
+            type_condition, error = evaluateExpression(self.last_expression, self.vars_in_function, "",start.line, start.column, self.used_functions  )
         self.error += error
-        
+
         if type_condition != "int":
             self.error += ErrorControl(start.line, start.column, f"Expected a conditional statement",  f" while {self.last_original_expression} then").__str__()
             self.error += "\n"
@@ -285,23 +285,23 @@ class VisitorInterp(SylVisitor):
             for i in range(4, ctx.getChildCount(),3):
                 arg_type = ctx.getChild(i)
                 arg_var_name = ctx.getChild(i + 1)
-                last_element = ctx.getChild(i + 2)                  
+                last_element = ctx.getChild(i + 2)
                 self.used_functions[function_name]["arguments"] += [{"arg_name": arg_var_name.getText(), "type": arg_type.getText()}]
                 self.vars_in_function[arg_var_name.getText()] = { "type": arg_type.getText() }
                 self.output += arg_type.getText() + " " + arg_var_name.getText()
 
                 if not len(self.used_functions[function_name]["arguments"]) == 1 and len([function for function in self.used_functions[function_name]["arguments"] if function["arg_name"] == arg_var_name.getText()]) > 1:
-                    self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Argument {arg_var_name.getText()} is already defined", "").__str__()                    
+                    self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Argument {arg_var_name.getText()} is already defined", "").__str__()
 
                 instruccion_sets += 2
 
                 if last_element.getText() == ",":
                     self.output += ", "
                     instruccion_sets += 1
-                
+
                 if last_element.getText() == ")":
                     break
-        
+
 
         self.output += "){"
         instruccion_sets += 2
@@ -347,14 +347,14 @@ class VisitorInterp(SylVisitor):
                     self.error += ErrorControl(ctx.start.line, ctx.start.column, f"Variable {arg.getText()} is not defined", "").__str__()
             self.output += arg.getText()
             function_arguments += [arg.getText()]
-        
+
         try:
             for argument_index in range(len(self.used_functions[function_name]["arguments"])):
                 if self.is_function:
                     evaluated_type, error =evaluateExpression(function_arguments[argument_index], self.vars_in_function, "", ctx.start.line, ctx.start.column, self.used_functions)
                 else:
                     evaluated_type, error =evaluateExpression(function_arguments[argument_index], self.used_variables, "", ctx.start.line, ctx.start.column, self.used_functions)
-                
+
                 self.error += error
 
                 if self.used_functions[function_name]["arguments"][argument_index]["type"] != evaluated_type:
