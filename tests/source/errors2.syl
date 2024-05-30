@@ -1,0 +1,25 @@
+function void pintaTexto( )
+{
+    print ( "Hola Mundo" ) ;
+}
+function void pintaTexto( )
+{
+    print ( "Hola Mundo2" ) ;
+}
+function boolean multiplicaNumeros ( int a , int b , int a )
+{
+    real multiplicacion : = a mul b ;
+    returns multiplicacion;
+}
+BEGIN
+int a : = 5 ;
+print ( "Hola Mundo3" ) ;
+a : = b ;
+real divisionZero : = 1 div 0;
+holaMundo();
+int numeroReal : = ( a lt 1 ) div 2 mul ( 1 . 2 add 2 ) ;
+int i : = 0 ;
+while 2 . 2 then
+    i : = i add 1 ;
+end
+END
