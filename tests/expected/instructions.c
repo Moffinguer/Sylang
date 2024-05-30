@@ -7,7 +7,6 @@ int main()
 	if (5 > 2) {
 		printf("5 es mayor que 2");
 		j = 2 + j;
-
 	} else {
 		printf("No es mayor que 2");
 	}
