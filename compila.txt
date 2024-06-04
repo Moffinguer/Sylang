@@ -1,0 +1,6 @@
+Creación de un entorno virtual con python
+$ python -m venv .
+Ejecutar los siguientes comandos para instalar los archivos necesarios
+antlr
+./utils/install.sh
+cd utils && ./regenerate.sh
