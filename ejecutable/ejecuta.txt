@@ -1,0 +1,5 @@
+Tras haber instalado los paquetes desde compila.txt se debe de acceder al directorio src/
+Para probar su funcionamiento(en un sistema linux):
+syl ../tests/source/helloworld.syl
+
+Esto generará un archivo helloworld.c en el mismo directorio con su compilado en C
